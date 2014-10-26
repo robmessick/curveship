@@ -1,14 +1,15 @@
 'Artmaking, a tiny demonstration game for Curveship.'
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
 __license__ = 'ISC'
 __version__ = '0.5.0.0'
 
-from item_model import Actor, Room, Thing
-from action_model import Modify, Sense
-import can
-import when
+from curveship.item_model import Actor, Room, Thing
+from curveship.action_model import Modify, Sense
+from curveship import can
+from curveship import when
 
 discourse = {
     'metadata': {

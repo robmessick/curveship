@@ -1,4 +1,7 @@
 'Represent initial and ongoing discourse features. Extended by games/stories.'
+from __future__ import absolute_import
+from six import text_type
+from six.moves import range
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -10,7 +13,10 @@ import math
 import re
 import types
 
-import input_model
+from . import input_model
+
+def cmp(a, b):
+    return (a > b) - (a < b)
 
 class SpecialTime(object):
     'Adapted from extremes.py, based on PEP 326.'
@@ -290,8 +296,8 @@ class Discourse(object):
         'Creates an English list, delimited and conjoined as specified.'
         for i in range(0, len(phrases)):
             # Convert any integers in the list to strings here
-            if type(phrases[i]) == types.IntType:
-                phrases[i] = str(phrases[i])
+            if type(phrases[i]) == int:
+                phrases[i] = text_type(phrases[i])
         if len(phrases) >= 2:
             phrases[-1] = conjunction + ' ' + phrases[-1]
         joiner = delimiter + ' '
@@ -729,7 +735,7 @@ class Discourse(object):
         'locked': lambda i: ('unlocked', 'locked')[i],
         'intact': lambda i: ('trampled', 'pristine')[i],
         'angry': lambda i: ('calm', 'enraged')[i],
-        'setting': lambda i: str(i),
+        'setting': lambda i: text_type(i),
         'word': lambda i: i.upper()}
 
     failure_to_english = {

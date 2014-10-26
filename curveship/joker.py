@@ -1,4 +1,5 @@
 'Carry out directives such as save, restore, and quit.'
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -10,9 +11,9 @@ import os
 import pickle
 import re
 
-import discourse_model
-import microplanner
-import reply_planner
+from . import discourse_model
+from . import microplanner
+from . import reply_planner
 
 MESSAGE = {
     'are': '[] are the [].',
@@ -141,7 +142,7 @@ def load_file(file_name, required, defaults, module_type):
     pieces.reverse()
     module_name = '.'.join(pieces)
     try:
-        mod = __import__(module_name, globals(), locals(), required, -1)
+        mod = __import__(module_name, globals(), locals(), required, 0)
         for attr in required:
             if not hasattr(mod, attr):
                 msg = ('This is not a complete fiction file: "' + attr +
@@ -152,9 +153,9 @@ def load_file(file_name, required, defaults, module_type):
             module = __import__(module_name, globals(), locals(), [attr])
             if not hasattr(module, attr):
                 setattr(module, attr, default)
-    except ImportError, err:
+    except ImportError as err:
         msg = ('Unable to open '+ module_type + ' module "' + module_name +
-               '" due to this error: ' + str(err))
+               '" due to this error: ' + text_type(err))
         raise StartupError(msg)
     return module
 
@@ -233,7 +234,7 @@ def report(kind, *params):
     string = parts.pop(0)
     params = list(params)
     while len(parts) > 0:
-        string += str(params.pop(0))
+        string += text_type(params.pop(0))
         string += parts.pop(0)
     return '---\n' + string + '\n---'
 
@@ -258,7 +259,7 @@ def wc_info(tokens, world_or_concept, world, discourse):
     'Reports on the world or a concept: tree, item info, actions.'
     report_text = ''
     if tokens[1] == 'actions':
-        ids = world_or_concept.act.keys()
+        ids = list(world_or_concept.act.keys())
         if len(ids) == 0:
             report_text = report('nothing_happened')
         else:
@@ -273,7 +274,7 @@ def wc_info(tokens, world_or_concept, world, discourse):
         item = world_or_concept.item[tokens[2]]
         for attr in dir(item):
             if not callable(getattr(item, attr)) and not attr[:2] == '__':
-                report_text += attr + ': ' + str(getattr(item, attr))
+                report_text += attr + ': ' + text_type(getattr(item, attr))
                 report_text += '\n'
         report_text = report('wrap', report_text[:-1])
     elif tokens[1] == 'tree':
@@ -498,8 +499,8 @@ def narrating_uses(tokens, world, discourse):
             new_spin = load_spin(discourse.spin, spin_file)
             discourse.spin.update(new_spin)
             report_text = report('uses', tokens[2])
-        except StartupError, err:
-            report_text = str(err) + '. ' + report('uses_usage')
+        except StartupError as err:
+            report_text = text_type(err) + '. ' + report('uses_usage')
     return (report_text, world, discourse)
 
 
@@ -507,13 +508,13 @@ def narrating(tokens, world, discourse):
     'Returns a report describing the current spin.'
     report_text = report('spin_usage')
     if len(tokens) < 2:
-        pairs = discourse.spin.items()
+        pairs = list(discourse.spin.items())
         pairs.sort()
         longest = max([len(i) for (i, _) in pairs])
         string = ''
         for (key, value) in pairs:
             string += (longest - len(key) + 1) * ' '
-            string += key + '  ' + str(value) + '\n'
+            string += key + '  ' + text_type(value) + '\n'
         report_text = report('spin_report', string[:-1])
     elif 'narrating_'+tokens[1] in globals():
         (report_text, _,
@@ -535,7 +536,7 @@ def recount(tokens, world, discourse):
     else:
         report_text = report('recounting')
         concept = world.concept[discourse.spin['focalizer']]
-        ids = concept.act.keys()
+        ids = list(concept.act.keys())
         ids.sort()
         start = ids[0]
         end = ids[-1]
@@ -570,7 +571,7 @@ def restore(tokens, world, discourse):
     if len(tokens) > 1 and re.match('[a-zA-Z_0-9]+$', tokens[1]):
         try:
             file_name = 'save/' + tokens[1] + '.ses'
-            restore_file = file(file_name, 'r')
+            restore_file = open(file_name, 'r')
             (world, discourse) = pickle.load(restore_file)
             restore_file.close()
             report_text = report('restored')
@@ -584,7 +585,7 @@ def restore(tokens, world, discourse):
 def room_name(_, world, discourse):
     "Give the name of the focalizer's current room."
     focalizer = discourse.spin['focalizer']
-    room = str(world.room_of(focalizer))
+    room = text_type(world.room_of(focalizer))
     report_text = report('is', room, "focalizer's current room")
     return (report_text, None, world, discourse)
 
@@ -594,7 +595,7 @@ def save(tokens, world, discourse):
     if len(tokens) > 1 and re.match('[a-z_0-9]+$', tokens[1]):
         try:
             file_name = 'save/' + tokens[1] + '.ses'
-            save_file = file(file_name, 'w')
+            save_file = open(file_name, 'w')
             pickle.dump((world, discourse), save_file)
             save_file.close()
             report_text = report('saved')
@@ -637,14 +638,14 @@ def undo(tokens, world, discourse):
             if to_undo == 1:
                 to_undo = 'a command'
             else:
-                to_undo = str(to_undo) + ' commands'
+                to_undo = text_type(to_undo) + ' commands'
             report_text = report('undo_impossible', to_undo, commands)
         else:
             report_text = ''
             undone = 0
             while undone < to_undo:
                 command_to_undo = discourse.input_list.latest_command()
-                report_text += report('undone', str(command_to_undo))
+                report_text += report('undone', text_type(command_to_undo))
                 discourse.input_list.undo()
                 world.undo(command_to_undo.caused)
                 undone += 1
@@ -678,7 +679,7 @@ def joke(tokens, world, discourse):
         (report_text, reply_text, world,
          discourse) = globals()[head](tokens, world, discourse)
     else:
-        raise StandardError('The directive "' + head + '" is defined in the ' +
+        raise Exception('The directive "' + head + '" is defined in the ' +
          'discourse, but the corresponding routine in the Joker is missing.')
     texts = (report_text, reply_text)
     return (texts, world, discourse)

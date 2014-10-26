@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 'An interactive fiction system offering control over the narrative discourse.'
+from __future__ import absolute_import
+from six import text_type
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -12,16 +14,16 @@ import os
 import time
 import optparse
 
-import clarifier
-import command_map
-import discourse_model
-import joker
-import microplanner
-import preparer
-import presenter
-import recognizer
-import reply_planner
-import world_model
+from curveship import clarifier
+from curveship import command_map
+from curveship import discourse_model
+from curveship import joker
+from curveship import microplanner
+from curveship import preparer
+from curveship import presenter
+from curveship import recognizer
+from curveship import reply_planner
+from curveship import world_model
 
 class Multistream(object):
     'Encapsulates multiple output streams.'
@@ -56,12 +58,12 @@ def start_log(out_streams):
         latest = 0
     else:
         latest = max([int(log_file) for log_file in log_files])
-    log_file = 'logs/' + str(latest + 1) + '.log'
+    log_file = 'logs/' + text_type(latest + 1) + '.log'
     try:
-        log = file(log_file, 'w')
-    except IOError, err:
+        log = open(log_file, 'w')
+    except IOError as err:
         msg = ('Unable to open log file "' + log_file + '" for ' +
-               'writing due to this error: ' + str(err))
+               'writing due to this error: ' + text_type(err))
         raise joker.StartupError(msg)
     # So that we output to the screen and the log file:
     out_streams.streams.append(log)
@@ -85,7 +87,7 @@ def initialize(if_file, spin_files, out_streams):
         if i[:8] == 'COMMAND_':            
             setattr(command_map, i.partition('_')[2], getattr(fiction, i))
             delattr(fiction, i)
-    for (key, value) in discourse_model.SPIN_DEFAULTS.items():
+    for (key, value) in list(discourse_model.SPIN_DEFAULTS.items()):
         if key not in fiction.discourse['spin']:
             fiction.discourse['spin'][key] = value
     while len(spin_files) > 0:
@@ -243,7 +245,7 @@ def main(argv, in_stream=sys.stdin, out_stream=sys.stdout):
         if len(world.act) > 0:
             _, id_list, world = simulator(None, world,
                                           discourse.spin['commanded'],
-                                          world.act.values())
+                                          list(world.act.values()))
             focal_concept = world.concept[discourse.spin['focalizer']]
             reply_text, discourse = teller(id_list, focal_concept, discourse)
             presenter.present(reply_text, out_streams)
@@ -251,14 +253,14 @@ def main(argv, in_stream=sys.stdin, out_stream=sys.stdout):
             previous_time = time.time()
             world, discourse = each_turn(world, discourse, in_stream,
                                          out_streams)
-            out_streams.log.write('#' + str(time.time() - previous_time))
-    except joker.StartupError, err:
+            out_streams.log.write('#' + text_type(time.time() - previous_time))
+    except joker.StartupError as err:
         presenter.present(err.msg, Multistream([sys.stderr]))
         return_code = 2
-    except KeyboardInterrupt, err:
+    except KeyboardInterrupt as err:
         presenter.present('\n', out_streams)
         return_code = 2
-    except EOFError, err:
+    except EOFError as err:
         presenter.present('\n', out_streams)
         return_code = 2
     finally:

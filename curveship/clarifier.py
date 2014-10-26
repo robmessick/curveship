@@ -1,4 +1,7 @@
 'Deal with unrecognized inputs, including ambiguous ones.'
+from __future__ import absolute_import
+from six import text_type
+from six.moves import range
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -8,8 +11,8 @@ __status__ = 'Development'
 
 import re
 
-import preparer
-import presenter
+from . import preparer
+from . import presenter
 
 def english_command(tokens, concept, discourse):
     """Converts a command to English.
@@ -38,7 +41,7 @@ def clarify(user_input, concept, discourse, in_stream, out_streams):
     'States that input was not understood or attempts to disambiguate input.'
 
     if len(user_input.normal) == 0 and len(user_input.possible) == 0:
-        clarification = ('(It\'s not clear what "' + str(user_input) +
+        clarification = ('(It\'s not clear what "' + text_type(user_input) +
         '" means. Try typing some other command to ' +
         concept.item[discourse.spin['commanded']].noun_phrase(discourse) + '.)')
     else:
@@ -47,14 +50,14 @@ def clarify(user_input, concept, discourse, in_stream, out_streams):
         options = []
         for possibility in user_input.possible:
             commands.append(english_command(possibility, concept, discourse))
-            options.append('(' + str(len(commands)) + ') "' +
+            options.append('(' + text_type(len(commands)) + ') "' +
                            commands[-1] + '"')
-        options.append('(' + str(len(commands) + 1) + ') none of these')
+        options.append('(' + text_type(len(commands) + 1) + ') none of these')
         question += discourse.list_phrases(options, conjunction='or') + '?)'
         question = re.sub('",', ',"', question)
         presenter.present(question, out_streams)
         choose_a_number = preparer.prepare(discourse.separator,
-                          '(1-' + str(len(commands) + 1) + ')? ', in_stream)
+                          '(1-' + text_type(len(commands) + 1) + ')? ', in_stream)
         selected = None
         if len(choose_a_number.tokens) == 1:
             try:
@@ -65,7 +68,7 @@ def clarify(user_input, concept, discourse, in_stream, out_streams):
             clarification = ('\n(Since you did not select '+
                              discourse.list_phrases(range(1, len(commands) + 1),
                              conjunction='or') + ', the command "' + 
-                             str(user_input) +
+                             text_type(user_input) +
                              '" cannot be understood. Try something else.)')
         else:
             clarification = '\n(Very well ...)'

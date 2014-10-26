@@ -1,4 +1,5 @@
 'A spin to make the narrator seem surprised at everything.'
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort <nickm@nickm.com>'
 __version__ = '0.5'

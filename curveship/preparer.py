@@ -1,4 +1,7 @@
 'Tokenize input text for the Recognizer.'
+from __future__ import absolute_import
+from __future__ import print_function
+from six.moves import input
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -13,14 +16,14 @@ try:
 except ImportError:
     pass
 
-import input_model
+from . import input_model
 
 def prepare(separator, prompt='', in_stream=sys.stdin, out_stream=sys.stdout):
     """Read a string from the input string and return it tokenized.
 
     Andrew Plotkin fixed this so that up arrow fetches the previous command."""
     if (hasattr(in_stream, 'isatty') and in_stream.isatty()):
-        input_string = raw_input(prompt)
+        input_string = input(prompt)
     else:
         out_stream.write(prompt)
         input_string = in_stream.readline()
@@ -52,5 +55,5 @@ def tokenize(input_string, separator):
 
 if __name__ == "__main__":
     TEST_INPUT = prepare()
-    print TEST_INPUT.tokens
+    print(TEST_INPUT.tokens)
 

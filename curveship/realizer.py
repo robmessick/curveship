@@ -1,4 +1,7 @@
 'Surface realization: Convert a fully specified section to a string.'
+from __future__ import absolute_import
+from six import string_types
+from six.moves import range
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -8,7 +11,7 @@ __status__ = 'Development'
 
 import re
 import types
-import irregular_verb
+from . import irregular_verb
 
 def apply_filter_list(filter_list, string):
     'Transforms the string by applying all filters in the list.'
@@ -27,7 +30,7 @@ class Section(object):
     def __str__(self):
         string = '\n<section>\n\n'
         for i in self.blocks:
-            string += str(i) + '\n'
+            string += text_type(i) + '\n'
         return string + '</section>\n'
 
     def realize(self, concept, discourse):
@@ -73,7 +76,7 @@ class Paragraph(object):
     def __str__(self):
         string = ''
         for i in self.sentences:
-            string += str(i)
+            string += text_type(i)
         return '<p>' + string + '</p>\n'
 
     def merge(self, paragraph):
@@ -181,7 +184,7 @@ class Sentence(object):
     def __str__(self):
         string = ''
         for i in self.parts:
-            string += str(i) + ' '
+            string += text_type(i) + ' '
         if len(self.parts) > 0:
             string = string[0:-1]
         return '<s>' + string + '</s>'
@@ -202,7 +205,7 @@ class Sentence(object):
         subjects, tf = (), False
         for part in self.parts:
             more = ''
-            if type(part) is types.StringType:
+            if isinstance(part, string_types):
                 if part == '[begin-caps]':
                     all_caps = True
                 elif part == '[end-caps]':
@@ -249,7 +252,7 @@ class Word(object):
         self.tag = tag
 
     def __eq__(self, word):
-        return str(self) == str(word)
+        return text_type(self) == text_type(word)
 
     def __ne__(self, word):
         return not self.__eq__(word)
@@ -317,7 +320,7 @@ class NP(Word):
 class Noun(Word):
     'Noun describing an Item; may be pronominalized upon realization.'
 
-    subject, object, possessive, reflexive = range(4)
+    subject, object, possessive, reflexive = list(range(4))
 
     def __init__(self, tag, form, adjs, time, **keywords):
         self.form = form
@@ -373,7 +376,7 @@ class Deictic(Word):
 
     def realize(self, _, __, settings, subjects, tf):
         'Return a string realized from the word.'
-        string = str(self)
+        string = text_type(self)
         if self.tag == 'now':
             string = ['then', 'now'][settings.tense_rs == 'present']
         elif self.tag == 'here':
@@ -388,7 +391,7 @@ class Deictic(Word):
 class Pronoun(Word):
     'Pronoun of some form representing some Item.'
 
-    subject, object, possessive, reflexive = range(4)
+    subject, object, possessive, reflexive = list(range(4))
 
     subject_pronoun = {1:
     {'singular': {'male': 'I', 'female': 'I', 'neuter': 'I', '?': 'I'},
@@ -450,7 +453,7 @@ class Pronoun(Word):
         Word.__init__(self, tag)
 
     def __str__(self):
-        return 'P.' + self.tag + '.' + str(self.form)
+        return 'P.' + self.tag + '.' + text_type(self.form)
 
     def realize(self, concept, discourse, settings, subjects, tf):
         'Return a string realized from the word.'
@@ -643,14 +646,14 @@ class Verb(Word):
         self.intensive = False
         self.negated = False
         self.future_style = 'will'
-        for (key, value) in keywords.items():
+        for (key, value) in list(keywords.items()):
             setattr(self, key, value)
         self.is_be = (tag in ['be', 'am', 'are', 'is'])
         self.time = time
         Word.__init__(self, tag)
 
     def __str__(self):
-        return 'V.' + self.tag + '.' + str(self.default_number)
+        return 'V.' + self.tag + '.' + text_type(self.default_number)
 
     def third_person_singular(self):
         if re.search('(ch|sh|s|z|x)$', self.tag):

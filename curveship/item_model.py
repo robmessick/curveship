@@ -1,4 +1,8 @@
 'Represent existents with Item classes, instantiated by games/stories.'
+from __future__ import absolute_import
+from six.moves import range
+from six import text_type
+from six import string_types
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -8,10 +12,9 @@ __status__ = 'Development'
 
 import random
 import re
-import types
 
-import can
-import discourse_model
+from . import can
+from . import discourse_model
 
 def check_attributes(identifier, required, impossible, attributes):
     'Raise errors if required attributes are missing or impossible ones present.'
@@ -33,7 +36,7 @@ def check_attributes(identifier, required, impossible, attributes):
                 'an attempt to specify the attribute "' + present + 
                 '" which cannot be specified for this type of item.\n')
     if len(some_wrong) > 0:
-        raise StandardError(some_wrong[:-1])
+        raise Exception(some_wrong[:-1])
 
 def determine_called(called):
     'Using the called string, determine the name triple.'
@@ -150,7 +153,7 @@ def set_features(item, category, keywords):
     settings.update(keywords)
     if (settings['referring'] is not None and
         len(settings['referring']) > 0 and '|' not in settings['referring']):
-        raise StandardError('The item tagged "' + str(item) +
+        raise Exception('The item tagged "' + text_type(item) +
          '" has a nonempty "referring" attribute without a "|" ' +
          'separator. Place "|" after any optional words and before ' +
          'any names, at the very beginning or end, if appropriate.')
@@ -158,7 +161,7 @@ def set_features(item, category, keywords):
         settings['qualities'] += [category]
     for (name, value) in settings.items():
         if re.search('[^a-z_]', name):
-            raise StandardError('A feature with invalid name "' + name +
+            raise Exception('A feature with invalid name "' + name +
              '" is used in the fiction module.')
         setattr(item, name, value)
     return item
@@ -168,19 +171,19 @@ class Item(object):
 
     def __init__(self, tag_and_parent, category, **keywords):        
         if self.__class__ == Item:
-            raise StandardError('Attempt in Item "' + self._tag +
+            raise Exception('Attempt in Item "' + self._tag +
                   '" to instantiate abstract base class world_model.Item')
         if tag_and_parent == '@cosmos':
             self._tag = tag_and_parent
             (self.link, self.parent) = (None, None)
         else:
             (self._tag, self.link, self.parent) = tag_and_parent.split()
-        if (not type(self._tag) == types.StringType) or len(self._tag) == 0:
-            raise StandardError('An Item lacking a "tag" attribute, ' +
+        if (not isinstance(self._tag, string_types) or len(self._tag) == 0):
+            raise Exception('An Item lacking a "tag" attribute, ' +
              'or with a non-string or empty tag, has been specified. A ' +
              'valid tag is required for each item.')
         if not re.match('@[a-z0-9_]{2,30}', self._tag):
-            raise StandardError('The tag "' + self._tag +
+            raise Exception('The tag "' + self._tag +
              '" is invalid. Tags start with "@" and otherwise consist of ' +
              '2-30 characters which are only lowercase letters, numerals, ' +
              'and underscores.')
@@ -215,10 +218,10 @@ class Item(object):
     def __eq__(self, item):
         if item is None:
             return False
-        if type(item) == types.StringType:
-            return str(self) == item
-        self_list = [str(self), self.article, self.called]
-        item_list = [str(item), item.article, item.called]
+        if isinstance(item, string_types):
+            return text_type(self) == item
+        self_list = [text_type(self), self.article, self.called]
+        item_list = [text_type(item), item.article, item.called]
         equal_attrs = (set(dir(self)) == set(dir(item)))
         if equal_attrs:
             for i in dir(self):
@@ -365,7 +368,7 @@ class Item(object):
         if entire:
             use_article = self.article
             if (self.article in discourse.indefinite and
-                str(self) in discourse.givens):
+                text_type(self) in discourse.givens):
                 use_article = 'the'
             else:
                 if self.article in ['a', 'an']:
@@ -374,12 +377,12 @@ class Item(object):
                         use_article += 'n'
             if len(use_article) > 0:
                 string = use_article + ' ' + string
-        discourse.givens.add(str(self))
+        discourse.givens.add(text_type(self))
         return string
 
     def place(self, world):
         'Returns the Room this Item is located in, according to World.'
-        tag = str(self)
+        tag = text_type(self)
         while not world.has('room', tag) and not tag == '@cosmos':
             tag = world.item[tag].parent
         return world.item[tag]
@@ -447,7 +450,7 @@ class Actor(Item):
 
     def exits(self, concept):
         "Return this Actor's current Room's exit dictionary."
-        return concept.room_of(str(self)).exits
+        return concept.room_of(text_type(self)).exits
 
     def act(self, command_map, concept):
         'The default act method runs a script, if there is one.'
@@ -461,16 +464,16 @@ class Actor(Item):
 
     def do_command(self, command_words, command_map, concept):
         'Return the Action that would result from the provided command.'
-        if type(command_words) == types.StringType:
+        if isinstance(command_words, string_types):
             command_words = command_words.split()
         head = command_words[0].lower()
         if not hasattr(command_map, head):
-            raise StandardError('The command headed with "' + head +
+            raise Exception('The command headed with "' + head +
              '" is defined in the discourse, but the routine to build an ' +
              'action from it is missing.')
         else:
             mapping = getattr(command_map, head)
-            return mapping(str(self), command_words, concept)
+            return mapping(text_type(self), command_words, concept)
 
 
 class Door(Item):

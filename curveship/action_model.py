@@ -1,4 +1,7 @@
 'Define categories of Action and their consequences in the World.'
+from __future__ import absolute_import
+from six import text_type
+from six import string_types
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -22,9 +25,9 @@ class Action(object):
 
     def __init__(self, verb, agent, category, **keywords):
         if self.__class__ == Action:
-            raise StandardError('Attempt to instantiate abstract base ' +
+            raise Exception('Attempt to instantiate abstract base ' +
                                 'class action_model.Action')
-        self.id = ACTION_ID.next()
+        self.id = next(ACTION_ID)
         self.verb = verb
         self.agent = agent
         self.cause = self.agent
@@ -44,7 +47,7 @@ class Action(object):
 
     def __str__(self):
         'Describes the action in a one-line string.'
-        string = ':' + str(self.id) + ': '
+        string = ':' + text_type(self.id) + ': '
         if self.refusal is not None:
             string += 'Refused '
         elif len(self.failed) > 0:
@@ -55,7 +58,7 @@ class Action(object):
                   'old_value', 'new_value', 'old_link', 'old_parent',
                   'new_link', 'new_parent', 'target', 'cause', 'start']:
             if hasattr(self, i):
-                string += i + '=' + str(getattr(self, i)) + ' '
+                string += i + '=' + text_type(getattr(self, i)) + ' '
         return string[:-1]
 
     @property
@@ -85,7 +88,7 @@ class Action(object):
             if self.refusal is None:
                 if self.verb == 'leave':
                     room = world.room_of(self.agent)
-                    if world.can_see(self.agent, str(room)):
+                    if world.can_see(self.agent, text_type(room)):
                         if room.exit(self.direction) is None:
                             if self.direction not in room.exits:
                                 self.refusal = ('[' + self.agent +
@@ -105,7 +108,7 @@ class Action(object):
         'Does the string indicate this action?'
         to_match = event_test.split()
         for i in to_match:
-            if re.search(i, str(self)) is None:
+            if re.search(i, text_type(self)) is None:
                 return False
         return True
 
@@ -281,14 +284,14 @@ class Action(object):
 
         string = '\n'
         for (met, condition) in self.preconditions:
-            if not type(condition) == str:
-                condition = ' '.join(str(pre_part) for pre_part in condition)
+            if not isinstance(condition, string_types):
+                condition = ' '.join(text_type(pre_part) for pre_part in condition)
             string += ['#####> ', '/ / /  '][met] + condition + '\n'
-        string += str(self) + '\n'
+        string += text_type(self) + '\n'
         if hasattr(self, 'post'):
             success = (len(self.failed) == 0) and self.refusal is None
             string += [' ##### ', r'\ \ \  '][success]
-            string += ' '.join(str(post_part) for post_part in self.post())
+            string += ' '.join(text_type(post_part) for post_part in self.post())
             string += '\n'
         return string
 
@@ -418,7 +421,7 @@ class Configure(Action):
             item.parent = self.new_parent
             item.link = self.new_link
             for actor in world.concept:
-                room_tag = str(world.room_of(actor))
+                room_tag = text_type(world.room_of(actor))
                 # If the item disappeared from sight, transfer it out...
                 if seen_by[actor] and not world.can_see(actor, self.direct):
                     world.transfer_out(item, actor, self.end)  
@@ -452,7 +455,7 @@ class Configure(Action):
                     world.transfer(world.item[room_tag], actor, self.end)
                     look_at = Sense('examine', actor, 
                                     modality='sight', direct=room_tag)
-                    look_at.cause = ':' + str(self.id) + ':'
+                    look_at.cause = ':' + text_type(self.id) + ':'
                     self.enlightened.append(look_at)
         else:
             item.parent = self.old_parent
@@ -528,7 +531,7 @@ class Configure(Action):
             room = self.new_parent
             look_at = Sense('examine', self.direct, 
                             modality='sight', direct=room)
-            look_at.cause = ':' + str(self.id) + ':'
+            look_at.cause = ':' + text_type(self.id) + ':'
             actions.append(look_at)
         elif world.item[self.direct].substance:
             substance = self.direct.partition('_')[0]
@@ -598,14 +601,14 @@ class Modify(Action):
                 if (actor in [self.agent, self.direct] or 
                     world.can_see(actor, self.direct)):
                     world.transfer(item, actor, self.end)
-                room_tag = str(world.room_of(actor))
+                room_tag = text_type(world.room_of(actor))
                 if (room_tag in world.concept[actor].item and
                     world.concept[actor].item[room_tag].blanked and
                     world.can_see(actor, room_tag)):
                     world.transfer(world.item[room_tag], actor, self.end)
                     look_at = Sense('examine', actor, 
                                     modality='sight', direct=room_tag)
-                    look_at.cause = ':' + str(self.id) + ':'
+                    look_at.cause = ':' + text_type(self.id) + ':'
                     self.enlightened.append(look_at)
 
     def pre(self, world):
@@ -641,7 +644,7 @@ class Modify(Action):
 
     def post(self):
         "Postcondition: Item's feature has a new value."
-        return ('has_value', self.direct, self.feature, str(self.new_value))
+        return ('has_value', self.direct, self.feature, text_type(self.new_value))
 
     def entails(self, _):
         'Entailed Actions for Modify: Just looking at newly-lit Items.'

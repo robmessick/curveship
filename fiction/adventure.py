@@ -1,4 +1,5 @@
 'Adventure in Style, based on the classic game and an unusual book.'
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort (based on works by Crowther, Woods, and Queneau)'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -8,10 +9,10 @@ __status__ = 'Development'
 
 from random import random, randint, choice
 
-from item_model import Actor, Door, Room, SharedThing, Substance, Thing
-from action_model import Behave, Configure, Modify, Sense
-from joker import update_spin
-import can
+from curveship.item_model import Actor, Door, Room, SharedThing, Substance, Thing
+from curveship.action_model import Behave, Configure, Modify, Sense
+from curveship.joker import update_spin
+from curveship import can
 
 discourse = {
 
@@ -697,7 +698,7 @@ class Wanderer(Actor):
 
     def act(self, command_map, world):
         if random() > .2 and len(self.exits(world)) > 0:
-            way = choice(self.exits(world).keys())
+            way = choice(list(self.exits(world).keys()))
             return [self.do_command('exit ' + way, command_map, world)]
 
 

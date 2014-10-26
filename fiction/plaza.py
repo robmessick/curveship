@@ -1,6 +1,7 @@
 """Plaza
 
 Items (in particular, Things and Rooms) representing the setting of Lost One."""
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'

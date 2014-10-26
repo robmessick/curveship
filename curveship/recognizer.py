@@ -1,4 +1,6 @@
 'Understand prepared user input as commands or directives. The "parser."'
+from __future__ import absolute_import
+from six import text_type
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -12,9 +14,9 @@ import re
 def noun_phrase(item, discourse):
     'Returns a regular expression (string) corresponding to the Item.'
     (before, nouns, after) = item.referring
-    if str(item) == discourse.spin['narratee']:
+    if text_type(item) == discourse.spin['narratee']:
         nouns.update(discourse.me_nouns)
-    if str(item) == discourse.spin['narrator']:
+    if text_type(item) == discourse.spin['narrator']:
         nouns.update(discourse.you_nouns)
     phrase = ('((and|,|' + '|'.join(before) + '|' + '|'.join(nouns) + ') )*' +
               '(' + '|'.join(nouns) + ')' +
@@ -46,7 +48,7 @@ def nonterminal(nonterm, discourse, concept):
     phrases = []
     agent = discourse.spin['commanded']
     if nonterm == 'RELATION':
-        link_names = discourse.english_to_link.items()
+        link_names = list(discourse.english_to_link.items())
         link_names.sort()
         # Sorted here because 'onto' should be listed before 'on' and so on,
         # so the list of name to link mappings is reversed.
@@ -70,7 +72,7 @@ def nonterminal(nonterm, discourse, concept):
         for i in worn(agent, concept):
             phrases.append((noun_phrase(concept.item[i], discourse), i))
     elif nonterm == 'DIRECTION':
-        for (i, j) in discourse.compass.items():
+        for (i, j) in list(discourse.compass.items()):
             phrases.append((discourse.determiner + i, j))
     elif nonterm == 'NEARBY':
         if agent == '@cosmos':
@@ -80,11 +82,11 @@ def nonterminal(nonterm, discourse, concept):
         agent_room = concept.room_of(agent)
         if agent_room is None:
             return []
-        elif concept.item[str(agent_room)].door:
-            rooms_visible = concept.item[str(agent_room)].connects
+        elif concept.item[text_type(agent_room)].door:
+            rooms_visible = concept.item[text_type(agent_room)].connects
         else:
-            rooms_visible = agent_room.view.keys()
-        for room in [str(agent_room)] + rooms_visible:
+            rooms_visible = list(agent_room.view.keys())
+        for room in [text_type(agent_room)] + rooms_visible:
             for i in [room] + concept.descendants(room):
                 phrases.append((noun_phrase(concept.item[i], discourse), i))
     return phrases

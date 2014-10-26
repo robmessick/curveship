@@ -2,6 +2,7 @@
 
 An augmentation of Roger Firth's Cloak of Darkness (1999) in Curveship,
 an interactive fiction development system by Nick Montfort."""
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort (extending a game by Roger Firth)'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -9,11 +10,11 @@ __license__ = 'ISC'
 __version__ = '0.5.0.0'
 __status__ = 'Development'
 
-from item_model import Actor, Thing, Substance
-from action_model import Modify
-import can
+from curveship.item_model import Actor, Thing, Substance
+from curveship.action_model import Modify
+from curveship import can
 
-import fiction.cloak
+from . import cloak
 
 discourse = fiction.cloak.discourse
 discourse['metadata']['title'] = 'Cloak of Darkness Plus'

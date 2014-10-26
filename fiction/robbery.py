@@ -1,4 +1,5 @@
 'The Simulated Bank Robbery, a story (not an IF) for telling via Curveship.'
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'

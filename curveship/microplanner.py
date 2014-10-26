@@ -1,4 +1,7 @@
 'Text planning: Set tense and referring expressions, lexicalize.'
+from __future__ import absolute_import
+from six import string_types
+from six import text_type
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -10,8 +13,8 @@ import random
 import re
 import types
 
-import reply_planner
-from realizer import Section, Paragraph, Heading
+from . import reply_planner
+from .realizer import Section, Paragraph, Heading
 
 def has_final(node):
     final = False
@@ -108,7 +111,7 @@ def name_room(node, tense_er, tense_rs, concept_now, discourse):
 
 def select(string_or_list):
     'Return a string, either the one passed or a random element from a list.'
-    if type(string_or_list) == types.StringType:
+    if isinstance(string_or_list, string_types):
         return string_or_list
     else:
         return random.choice(string_or_list)
@@ -132,7 +135,7 @@ def get_representation(action, discourse):
             if hasattr(action, 'direct') or hasattr(action, 'target'):
                 template = '[agent/s] [' + verb + '/v] [direct/o]'
             if hasattr(action, 'indirect') or hasattr(action, 'new_parent'):
-                template = ('<<<ERROR:' + str(verb) +
+                template = ('<<<ERROR:' + text_type(verb) +
                             ' has an indirect object but no template.>>>')
     return template
 
@@ -286,7 +289,7 @@ def describe(tag, tense_er, tense_rs, speed, concept, discourse, sensor, time):
     for desc_tag in to_mention:
         desc_item = concept.item[desc_tag]
         if desc_item.mention:
-            if desc_item.parent == str(item):
+            if desc_item.parent == text_type(item):
                 children[desc_item.link].append(desc_tag)
             elif desc_item.parent == '@cosmos':
                 children['in'].append(desc_tag)

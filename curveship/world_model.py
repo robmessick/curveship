@@ -1,4 +1,6 @@
 'World and Concept classes for instantiation by interactive fictions.'
+from __future__ import absolute_import
+from six import text_type
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -9,22 +11,22 @@ __status__ = 'Development'
 import copy
 import operator
 
-import can
-import item_model
+from . import can
+from . import item_model
 
 def check_for_reserved_tags(items):
     'Raise an error if a reserved tag, such as @cosmos, is in the list.'
     if '@cosmos' in items:
-        raise StandardError('The tag "@cosmos" is reserved for the ' +
+        raise Exception('The tag "@cosmos" is reserved for the ' +
          'special item at the root of the item tree. Use a different ' +
          'tag for item now tagged "@cosmos".')
     if '@focalizer' in items:
-        raise StandardError('The tag "@focalizer" is reserved for use ' +
+        raise Exception('The tag "@focalizer" is reserved for use ' +
          'in indicating the actor who is currently focalizing the ' +
          'narration. Use a different tag for item now tagged ' +
          '"@focalizer".')
     if '@commanded' in items:
-        raise StandardError('The tag "@commanded" is reserved for use ' +
+        raise Exception('The tag "@commanded" is reserved for use ' +
          'in indicating the actor who is currently being commanded. ' +
          'Use a different tag for item now tagged "@commanded".')
 
@@ -34,7 +36,7 @@ class WorldOrConcept(object):
 
     def __init__(self, item_list, actions):
         if self.__class__ == WorldOrConcept:
-            raise StandardError('Attempt to instantiate abstract base ' +
+            raise Exception('Attempt to instantiate abstract base ' +
                                 'class world_model.WorldOrConcept')
         self.item = {}
         self.act = actions
@@ -42,28 +44,28 @@ class WorldOrConcept(object):
         seen_tags = []
         # Construct the World's Item dictionary from the Item list:
         for item in item_list:
-            if str(item) in seen_tags:
-                raise StandardError('The tag "' + str(item) + '" is ' +
+            if text_type(item) in seen_tags:
+                raise Exception('The tag "' + text_type(item) + '" is ' +
                  "given to more than one item in the fiction's code. " +
                  'Item tags must be unique.')
-            seen_tags.append(str(item))
-            self.item[str(item)] = item
+            seen_tags.append(text_type(item))
+            self.item[text_type(item)] = item
         check_for_reserved_tags(self.item)
 
     def __str__(self):
-        return str(self.act) + '\n' + str(self.item)
+        return text_type(self.act) + '\n' + text_type(self.item)
 
     def accessible(self, actor):
         'List all Items an Item can access.'
         if actor == '@cosmos':
-            return self.item.keys()
+            return list(self.item.keys())
         compartment = self.compartment_of(actor)
-        tag_list = [str(compartment)]
+        tag_list = [text_type(compartment)]
         for (link, child) in compartment.children:
             if not link == 'on':
                 tag_list += [child]
                 tag_list += self.descendants(child, stop='closed')
-        tag_list += compartment.shared + self.doors(str(compartment))
+        tag_list += compartment.shared + self.doors(text_type(compartment))
         accessible_list = []
         for tag in tag_list:
             if (not hasattr(self.item[tag], 'accessible') or 
@@ -86,7 +88,7 @@ class WorldOrConcept(object):
             return self.item[tag]
         compartment = self.item[self.item[tag].parent]
         while not (compartment.room or compartment.door or
-                   str(compartment) == '@cosmos' or
+                   text_type(compartment) == '@cosmos' or
                    (not compartment.transparent and
                     hasattr(compartment, 'open') and not compartment.open)):
         # Keep ascending to the next parent until we encounter either
@@ -108,16 +110,16 @@ class WorldOrConcept(object):
         tag_list.append('@cosmos')
         room = self.room_of(action.agent)
         if room is not None:
-            tag_list.append(str(room))
-            for tag in self.descendants(str(room)):
+            tag_list.append(text_type(room))
+            for tag in self.descendants(text_type(room)):
                 if (not hasattr(self.item[tag], 'alive') or
                     self.item[tag].alive):
                     tag_list.append(tag)
         if action.configure and action.direct == action.agent:
             new_room = self.room_of(action.new_parent)
             if not room == new_room and new_room is not None:
-                tag_list.append(str(new_room))
-                for tag in self.descendants(str(new_room)):
+                tag_list.append(text_type(new_room))
+                for tag in self.descendants(text_type(new_room)):
                     if (not hasattr(self.item[tag], 'alive') or
                         self.item[tag].alive):
                         tag_list.append(tag)
@@ -188,7 +190,7 @@ class Concept(WorldOrConcept):
             cosmos = item_model.Actor('@cosmos', called='nature',
                                        allowed=can.have_any_item)
         self.item['@cosmos'] = cosmos
-        for (tag, item) in self.item.items():
+        for (tag, item) in list(self.item.items()):
             if not tag == '@cosmos':
                 self.item[item.parent].add_child(item.link, tag, True)
 
@@ -208,12 +210,12 @@ class Concept(WorldOrConcept):
 
     def update_item(self, item, time):
         'After perception, change an Item within this Concept.'
-        if str(item) in self.item:
-            old = self.item[str(item)]
+        if text_type(item) in self.item:
+            old = self.item[text_type(item)]
         else:
             old = None
-        self.item[str(item)] = item
-        self.changed.append((time, str(item), old))
+        self.item[text_type(item)] = item
+        self.changed.append((time, text_type(item), old))
 
     def roll_back_to(self, time):
         'Go back to a previous state of this Concept.'
@@ -263,10 +265,10 @@ class World(WorldOrConcept):
             parents = []
             for tag in self.item:
                 if (hasattr(self.item[tag], 'source') and
-                    self.item[tag].source == str(substance)):
+                    self.item[tag].source == text_type(substance)):
                     parents.append(tag)
                 elif hasattr(self.item[tag], 'vessel'):
-                    if self.item[tag].vessel == str(substance):
+                    if self.item[tag].vessel == text_type(substance):
                         # The amount should go into the vessel itself.
                         parents.append(tag)
                     else:
@@ -275,20 +277,20 @@ class World(WorldOrConcept):
                         # to create one amount for each empty vessel (or
                         # vessel that is holding something else) since that 
                         # vessel might hold the Substance later.
-                        parents.append(str(substance))
+                        parents.append(text_type(substance))
             tag_number = 1
             for parent in parents:
                 new_item = copy.deepcopy(substance)
-                new_item._tag += '_'  + str(tag_number)
+                new_item._tag += '_'  + text_type(tag_number)
                 tag_number += 1
                 new_item.link = 'in'
                 new_item.parent = parent
-                self.item[str(new_item)] = new_item
+                self.item[text_type(new_item)] = new_item
         if fiction.cosmos is None:
             fiction.cosmos = item_model.Actor('@cosmos', called='nature',
                                        allowed=can.have_any_item)
         self.item['@cosmos'] = fiction.cosmos
-        for (tag, item) in self.item.items():
+        for (tag, item) in list(self.item.items()):
             if not tag == '@cosmos':
                 self.item[item.parent].add_child(item.link, tag, True)
 
@@ -340,8 +342,8 @@ class World(WorldOrConcept):
         # The Actor is "out of play" (of @cosmos), and cannot see anything.
             return 'actor_in_play'
         if (item_place is None and
-            not tag in self.item[str(actor_place)].shared and
-            not tag in self.doors(str(actor_place))):
+            not tag in self.item[text_type(actor_place)].shared and
+            not tag in self.doors(text_type(actor_place))):
         # The Item could be either a SharedThing or a Door if its Room is
         # None. If its Room is None and neither is the case, however, it 
         # must be "out of play."
@@ -351,7 +353,7 @@ class World(WorldOrConcept):
         if not compartment == actor_place:
         # The Actor is is some sort of opaque compartment within a room.
         # Only Items within that compartment will be visible.
-            view_tags = [str(compartment)]
+            view_tags = [text_type(compartment)]
             for (link, child) in compartment.children:
                 if not link == 'on':
                     view_tags += [child] 
@@ -359,11 +361,11 @@ class World(WorldOrConcept):
         else:
         # Otherwise, list all the Items to which there is a line of sight
         # in the Actor's Room and in every Room that has a view from there.
-            if self.item[str(actor_place)].door:
-                rooms_visible = self.item[str(actor_place)].connects
+            if self.item[text_type(actor_place)].door:
+                rooms_visible = self.item[text_type(actor_place)].connects
             else:
-                rooms_visible = actor_place.view.keys()
-            for room_tag in [str(actor_place)] + rooms_visible:
+                rooms_visible = list(actor_place.view.keys())
+            for room_tag in [text_type(actor_place)] + rooms_visible:
                 view_tags += ([room_tag] + 
                                self.descendants(room_tag, stop='opaque'))
         if tag not in view_tags:
@@ -373,11 +375,11 @@ class World(WorldOrConcept):
         # Item are in the same Room, or if the Item is a SharedThing or Door
         # of the Actor's Room, or if the Actor is in a Door and the Item is
         # in a connecting Room.
-        if actor_place.room and str(item_place) in actor_place.view:
+        if actor_place.room and text_type(item_place) in actor_place.view:
         # If looking onto a Room in view, check how well it can be seen.
-            (view, _) = actor_place.view[str(item_place)]
+            (view, _) = actor_place.view[text_type(item_place)]
         lit = self.light_level(tag)
-        if str(self.compartment_of(actor)) == tag:
+        if text_type(self.compartment_of(actor)) == tag:
         # The compartment itself is the one case where it's important to
         # get the interior light level. If the line of sight crosses the 
         # compartment, the light level doesn't matter; the item can't be seen.
@@ -429,20 +431,20 @@ class World(WorldOrConcept):
                 cosmos_items.append(copy.deepcopy(self.item[i]))
         cosmos_acts = copy.deepcopy(self.act)
         self.concept['@cosmos'] = Concept(cosmos_items, cosmos_acts)
-        for actor in self.concept.keys():
+        for actor in list(self.concept.keys()):
             self.concept[actor].concept_of = actor
 
     def transfer(self, item, actor, time):
         "Place an appropriate version of an Item in the Actor's Concept."
         concept = self.concept[actor]
         # If a Room, first add this Room as a child of @cosmos
-        if item.room and str(item) not in self.concept[actor].item:
+        if item.room and text_type(item) not in self.concept[actor].item:
             new_cosmos = copy.deepcopy(concept.item['@cosmos'])
-            new_cosmos.add_child('in', str(item))
+            new_cosmos.add_child('in', text_type(item))
             concept.update_item(new_cosmos, time)
         # Now, the basic transfer applicable to all Items
-        if (str(item) not in concept.item or
-            not concept.item[str(item)] == item):
+        if (text_type(item) not in concept.item or
+            not concept.item[text_type(item)] == item):
             seen_item = copy.deepcopy(item)
             concept.update_item(seen_item, time)
             for (_, child) in item.children:
@@ -450,16 +452,16 @@ class World(WorldOrConcept):
                     self.transfer(self.item[child], actor, time)
         # If a Room, add SharedThings & Doors to the Actor's Concept.
         if item.room:
-            for shared_tag in self.item[str(item)].shared:
+            for shared_tag in self.item[text_type(item)].shared:
                 self.transfer(self.item[shared_tag], actor, time)
-            for door_tag in self.doors(str(item)):
+            for door_tag in self.doors(text_type(item)):
                 self.transfer(self.item[door_tag], actor, time)
         
     def transfer_out(self, item, actor, time):
         "Remove the Item from the Actor's Concept."
         concept = self.concept[actor]
-        if str(item) in concept.item:
-            missing_item = copy.deepcopy(concept.item[str(item)])
+        if text_type(item) in concept.item:
+            missing_item = copy.deepcopy(concept.item[text_type(item)])
             missing_item.link = 'of'
             missing_item.parent = '@cosmos'
             concept.update_item(missing_item, time)

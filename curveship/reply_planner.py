@@ -1,4 +1,6 @@
 'Plan a reply, as in "document planning" (but this is a reply in a dialogue).'
+from __future__ import absolute_import
+from six.moves import range
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -65,7 +67,7 @@ def cull_actions(actions, concept, discourse):
     for action in actions:
         if (action.verb == 'examine' and
             not action.agent == discourse.spin['focalizer'] and
-            action.direct == str(concept.room_of(action.agent))):
+            action.direct == text_type(concept.room_of(action.agent))):
             to_remove.append(action)
         elif action.salience < .2:
             to_remove.append(action)
@@ -176,7 +178,7 @@ class ReplyNode(object):
 
     def __init__(self, category):
         if self.__class__ == ReplyNode:
-            raise StandardError('Attempt to instantiate abstract base ' +
+            raise Exception('Attempt to instantiate abstract base ' +
                                 'class reply_planner.ReplyNode')
         self.category = category
 
@@ -193,7 +195,7 @@ class Internal(ReplyNode):
     def __str__(self):
         string = self.category + ' ('
         for child in self.children:
-            string += str(child) + ' '
+            string += text_type(child) + ' '
         string = string[:-1] + ') '
         return string
 
@@ -212,7 +214,7 @@ class Leaf(ReplyNode):
         ReplyNode.__init__(self, category)
 
     def __str__(self):
-        return self.category + ' ' + str(self.info)
+        return self.category + ' ' + text_type(self.info)
 
 
 class Commentary(Leaf):

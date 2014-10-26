@@ -1,4 +1,7 @@
 'Represent different user inputs (commands, directives, unrecognized).'
+from __future__ import absolute_import
+from six import text_type
+from six.moves import range
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -31,7 +34,7 @@ class RichInput(object):
     def set_category(self, value):
         'Setter for the input category (e.g., "command").'
         if value not in ['unrecognized', 'command', 'directive']:
-            raise StandardError('"' + value + '" was given as an input ' +
+            raise Exception('"' + value + '" was given as an input ' +
                                 'category but is not a valid category.')
         self._category = value
         self.unrecognized = (value == 'unrecognized')
@@ -91,7 +94,7 @@ class InputList(object):
         begin = index
         for i in self._all[begin:]:
             index += 1
-            full_list += str(index) + '. "' + str(i) + '" => ' + i.category
+            full_list += text_type(index) + '. "' + text_type(i) + '" => ' + i.category
             if not i.unrecognized:
                 full_list += ': ' + ' '.join(i.normal)
             full_list += '\n'

@@ -1,4 +1,6 @@
 'Translate commands, from user input or elsewhere, to Actions.'
+from __future__ import absolute_import
+from six import text_type
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -6,7 +8,7 @@ __license__ = 'ISC'
 __version__ = '0.5.0.0'
 __status__ = 'Development'
 
-from action_model import Behave, Configure, Modify, Sense
+from .action_model import Behave, Configure, Modify, Sense
 
 def check_for_metonymy(tag, concept):
     if hasattr(concept.item[concept.item[tag].parent], 'vessel'):
@@ -53,7 +55,7 @@ def doff(agent, tokens, _):
 def drop(agent, tokens, concept):
     'to let go; to set aside; to have done with; to let fall to the ground'
     to_be_dropped = check_for_metonymy(tokens[1], concept)
-    room = str(concept.room_of(to_be_dropped))
+    room = text_type(concept.room_of(to_be_dropped))
     return Configure('drop', agent,
                      template=['[agent/s] [relinquish/v] [direct/o]',
                                '[agent/s] [set/v] [direct/o] down'],
@@ -127,7 +129,7 @@ def free_from(agent, tokens, concept):
     if (container in concept.item and 
         concept.item[container] == concept.item[direct].parent):
         link = concept.item[direct].link
-    room_tag = str(concept.room_of(agent))
+    room_tag = text_type(concept.room_of(agent))
     template = '[agent/s] [free/v] [direct/o] from [' + container + '/o]'
     return Configure('free', agent,
                      template=template, direct=direct,
@@ -175,7 +177,7 @@ def leave_from(agent, tokens, concept):
     if (tokens[1] in concept.item and 
         concept.item[tokens[1]] == concept.item[agent].parent):
         link = concept.item[agent].link
-    room_tag = str(concept.room_of(agent))
+    room_tag = text_type(concept.room_of(agent))
     template = '[agent/s] [get/v] out of [' + tokens[1] + '/o]'
     return Configure('depart', agent,
                      template=template, direct=agent,
@@ -183,7 +185,7 @@ def leave_from(agent, tokens, concept):
 
 def listen(agent, tokens, concept):
     'to give close attention with the purpose of hearing; to hearken'
-    tokens.append(str(concept.room_of(agent)))
+    tokens.append(text_type(concept.room_of(agent)))
     action = listen_to(agent, tokens, concept)
     action.representation = '[agent/s] [listen/v]'
     return action
@@ -201,7 +203,7 @@ def lock(agent, tokens, _):
 
 def look(agent, tokens, concept):
     'to examine the surrounding room or compartment'
-    tokens.append(str(concept.compartment_of(agent)))
+    tokens.append(text_type(concept.compartment_of(agent)))
     action = look_at(agent, tokens, concept)
     action.representation = '[agent/s] [look/v] around'
     return action
@@ -281,7 +283,7 @@ def remove_from(agent, tokens, concept):
 
 def smell(agent, tokens, concept):
     'to perceive generally by the sense of smell'
-    tokens.append(str(concept.room_of(agent)))
+    tokens.append(text_type(concept.room_of(agent)))
     action = smell_of(agent, tokens, concept)
     action.representation = '[agent/s] [sniff/v] around'
     return action
@@ -337,7 +339,7 @@ def tell(agent, tokens, _):
 def throw(agent, tokens, concept):
     'to fling, cast, or hurl with a certain whirling motion of the arm'
     item = concept.item[tokens[1]]
-    new_place = str(concept.room_of(agent))
+    new_place = text_type(concept.room_of(agent))
     return Configure('throw', agent,
                      template='[agent/s] [toss/v] [direct/s] up',
                      direct=tokens[1], old=(item.link, item.parent),

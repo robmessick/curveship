@@ -3,6 +3,7 @@
 A demo interactive fiction in Curveship, an IF development system by
 Nick Montfort. Shows how narrative distance can be changed based on the
 player character's actions."""
+from __future__ import absolute_import
 
 __author__ = 'Nick Montfort'
 __copyright__ = 'Copyright 2011 Nick Montfort'
@@ -13,9 +14,9 @@ __status__ = 'Development'
 import random
 import time
 
-from item_model import Actor, Thing
-from action_model import Behave, Sense
-import can
+from curveship.item_model import Actor, Thing
+from curveship.action_model import Behave, Sense
+from curveship import can
 
 import fiction.plaza
 
@@ -166,7 +167,7 @@ class Wanderer(Actor):
 
     def act(self, command_map, concept):
         if random.random() < self.walk_probability:
-            way = random.choice(self.place(concept).exits.keys())
+            way = random.choice(list(self.place(concept).exits.keys()))
             return [self.do_command(['leave', way], command_map, concept)]
         return []
 
@@ -179,7 +180,7 @@ class Collector(Actor):
             if link == 'in' and 'trash' in concept.item[tag].qualities:
                 return [self.do_command(['take', tag], command_map, concept)]
         if random.random() < self.walk_probability:
-            way = random.choice(self.place(concept).exits.keys())
+            way = random.choice(list(self.place(concept).exits.keys()))
             return [self.do_command(['leave', way], command_map, concept)]
         return []
 
@@ -189,7 +190,7 @@ class Kicker(Actor):
 
     def act(self, command_map, concept):
         if random.random() < self.walk_probability:
-            way = random.choice(self.place(concept).exits.keys())
+            way = random.choice(list(self.place(concept).exits.keys()))
             return [self.do_command(['leave', way], command_map, concept)]
         elif random.random() < self.kick_probability:
             for (tag, link) in concept.item[str(self)].r(concept).child():
